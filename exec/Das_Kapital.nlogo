@@ -787,19 +787,19 @@ Model que representa els processos descrits a «El capital. Crítica de l'econom
 
 ## COM FUNCIONA
 
-Cada cel·la representa mitjans de producció i els treballadors es representen amb individus que es poden moure entre cel·les. Al principi, les cel·les són terres comunals en què els individus subsisteixen a partir del valor generat pel seu propi treball sense intermediaris. A la fila inferior, els mitjans de producció estan controlats per capital i hi ha treball assalariat que produeix mercaderies. A mesura que es reprodueix el capital i es va acomulant, aquest pot expandir-se a la cel·la immediatament superior. El nombre de treballadors assalariats que poden treballar-hi i la productivitat de les hores de treball augmenten exponencialment a mesura que el capital s'expandeix cap a les files superiors, representant el desenvolupament tecnològic dels mitjans de producció.
+Cada cel·la representa mitjans de producció i els treballadors es representen amb individus que es poden moure entre cel·les. Al principi, les cel·les són terres comunals en què els individus subsisteixen a partir del valor generat pel seu propi treball sense intermediaris. A la fila inferior, els mitjans de producció estan controlats per capital i hi ha treball assalariat que produeix mercaderies. A mesura que es reprodueix el capital i es va acumulant, aquest pot expandir-se a la cel·la immediatament superior. El nombre de treballadors assalariats que poden treballar-hi i la productivitat de les hores de treball augmenten exponencialment a mesura que el capital s'expandeix cap a les files superiors, representant el desenvolupament tecnològic dels mitjans de producció.
 
 ### Treballadors
 
-A cada cicle els treballadors gasten els recursos necessaris per viure («life_cost»). Els treballadors poden trobar-se en diferents estat. Si treballen en terres comunals són autònoms i guanyen el doble de recursos dels necessaris per sobreviure, fet que els permet reproduïr-se. Si fan treball assalariat o són autònoms, reben un salari/recursos equivalent a «wage * life_cost». Cada cel·la té un nombre màxim de treballadors que depèn del nivell de desenvolupament dels mitjans de producció i del capital disponible per comprar la força de treball. Els treballadors que no aconsegueixen feina es troben a l'atur i sobrevieun dels estalvis que puguin tenir. Si tenen menys anys que l'edat mínima per treballar («min_working_age»), són nens que no treballen i subsisteixen a partir dels recursos que els han traspassat la família en neixer. Els treballadors que es queden sense recursos en acabar un cicle, moren.
+A cada cicle els treballadors gasten els recursos necessaris per viure («life_cost»). Els treballadors poden trobar-se en diferents estat. Si treballen en terres comunals són autònoms i guanyen el doble de recursos dels necessaris per sobreviure, fet que els permet reproduir-se. Si fan treball assalariat, reben un salari/recursos equivalent a «wage * life_cost». Cada cel·la té un nombre màxim de treballadors que depèn del nivell de desenvolupament dels mitjans de producció i del capital disponible per comprar la força de treball. Els treballadors que no aconsegueixen feina es troben a l'atur i sobreviuen dels estalvis que puguin tenir. Si tenen menys anys que l'edat mínima per treballar («min_working_age»), són nens que no treballen i subsisteixen a partir dels recursos que els han traspassat la família en néixer. Els treballadors que es queden sense recursos en acabar un cicle, moren.
 
 ### Capital
 
-A cada cicle el capital produeix una quantitat de mercaderies determinades pel nombre de treballadors que pot contractar depenent del capital disponible, la productivitat del sistema de producció. El preu de les mercaderies és dues vegades el valor socialment necessari (la mitjana del cost de producció ponderat per la quantitat de mercaderies produides per de cada unitat de producció) per produir una unitat.
+A cada cicle el capital produeix una quantitat de mercaderies determinades pel nombre de treballadors que pot contractar depenent del capital disponible, la productivitat del sistema de producció. El preu de les mercaderies és dues vegades el valor socialment necessari (la mitjana del cost de producció ponderat per la quantitat de mercaderies produïdes per de cada unitat de producció) per produir una unitat.
 
 En cas que la producció de mercaderies superi la demanda, només es realitza el capital de les mercaderies de les cel·les amb el cost de producció més baix fins a cobrir tota la demanda (https://ca.wikipedia.org/wiki/Efecte_Mateu).
 
-El color de les cel·les indica el capital acomulat, amb colors més clars com més capital hi ha i negre si és 0.
+El color de les cel·les indica el capital acumulat, amb colors més clars com més capital hi ha i negre si és 0.
 
 ## COM USAR-LO
 
@@ -829,7 +829,7 @@ Afegir diferents tipus de mercaderies, cadenes de producció de mercaderies, sin
 
 (models in the NetLogo Models Library and elsewhere which are of related interest)
 
-## CREDITS I REFERÈNCIES
+## CRÈDITS I REFERÈNCIES
 
 Desenvolupat a https://github.com/jmaspons/Das-Kapital
 @#$#@#$#@

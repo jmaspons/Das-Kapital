@@ -2,6 +2,8 @@
 
 ![sreenshot of the netlogo model](screenshot-netlogo_v0.png)
 
+## [ENGLISH VERSION](https://github.com/jmaspons/Das-Kapital/tree/english)
+
 ## QUÈ ÉS?
 
 Model que representa els processos descrits a
@@ -22,7 +24,7 @@ superiors, representant el desenvolupament tecnològic dels mitjans de producci�
 
 A cada cicle els treballadors gasten els recursos necessaris per viure («life_cost»). Els treballadors poden trobar-se
 en diferents estat. Si treballen en terres comunals són autònoms i guanyen el doble de recursos dels necessaris per
-sobreviure, fet que els permet reproduir-se. Si fan treball assalariat o són autònoms, reben un salari/recursos
+sobreviure, fet que els permet reproduir-se. Si fan treball assalariat, reben un salari/recursos
 equivalent a «wage * life_cost». Cada cel·la té un nombre màxim de treballadors que depèn del nivell de desenvolupament
 dels mitjans de producció i del capital disponible per comprar la força de treball. Els treballadors que no
 aconsegueixen feina es troben a l'atur i sobreviuen dels estalvis que puguin tenir. Si tenen menys anys que l'edat
