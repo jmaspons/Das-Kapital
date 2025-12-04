@@ -3,7 +3,7 @@ using DataFrames
 # using Random
 
 
-@agent struct Capital(GridAgent{2})  # Heretem de GridAgent per a un espai 2D
+@agent struct Capital(GraphAgent)  # Heretem de GridAgent per a un espai 2D
     wealth::Float64 = 1.0 # capital inicial
     commodities::Float64 = 0
     # work_intensity::Float64
@@ -37,7 +37,7 @@ function capital_restart!(a::Capital, model::StandardABM)
         a.n_workplaces = 0
     end
 
-    model.world.n_workplaces[a.pos[1], a.pos[2]] = a.n_workplaces
+    model.world.n_workplaces[a.pos] = a.n_workplaces
 end
 
 
@@ -77,18 +77,18 @@ function capital_sell!(a::Capital, exchange_value, commodities_pending_demand)
 end
 
 
-function capital_develop_means_of_production!(a::Capital, model, exchange_value)
-    new_tech_cost = model.tech_cost_base^a.pos[2]
-    new_tech_pos = (a.pos[1], a.pos[2] + 1)
-    new_tech_exist = any(agent -> agent isa Capital, agents_in_position(new_tech_pos, model))
+function capital_develop_means_of_production!(a::Capital, model, exchange_value, new_tech_pos)
+    new_tech_cost = model.tech_cost_base ^ log2(a.max_n_workplaces) # TODO graph pos
+    # new_tech_pos = (a.pos[1], a.pos[2] + 1)
+    # new_tech_exist = any(agent -> agent isa Capital, agents_in_position(new_tech_pos, model))
     new_capital = nothing
-    if a.wealth > new_tech_cost * 2 && !new_tech_exist
+    if a.wealth > new_tech_cost * 2
         a.wealth -= new_tech_cost * 1
         new_capital = add_agent!(
             new_tech_pos, Capital, model;
-            wealth=new_tech_cost * 2,
-            work_productivity=2 ^ new_tech_pos[2],
-            max_n_workplaces=2 ^ new_tech_pos[2]
+            wealth = new_tech_cost * 2,
+            work_productivity = 2 * a.work_productivity,
+            max_n_workplaces = 2 * a.max_n_workplaces
         )
     end
 

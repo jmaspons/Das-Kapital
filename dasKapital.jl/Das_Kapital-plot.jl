@@ -1,5 +1,21 @@
-using Agents
+# https://juliadynamics.github.io/Agents.jl/stable/examples/agents_visualizations/#GraphSpace-models
+
+# Use local version of Agents.jl
+using Pkg
+Pkg.activate(".")  # activa l'entorn del projecte actual
+
+# # set local Agents.jl
+# Pkg.develop(path="/home/joan/Documents/nextcloud/dev/julia/Agents.jl")
+
+# # set upstream Agents.jl
+# Pkg.rm("Agents")
+# Pkg.add("Agents")
+
+using Agents # upstream version
+Pkg.status()
+
 # using CairoMakie # for abmplot
+using GraphMakie # for graph plots
 using GLMakie # for interactive plots
 using DataFrames
 # using Random
@@ -7,17 +23,16 @@ using Plots  # Importem la llibreria de gràfics
 
 include("Das_Kapital-model.jl")
 
-world_size = (5, 5)
-world_size = (10, 10)
+g_cyle = cycle_graph(4)
+g_bararasi_albert = barabasi_albert!(g_cyle, 16, 3);
+graphplot(g_bararasi_albert)
+world_graph = g_bararasi_albert
 
-
-###########################
-## Interactive ABM plots ##
-###########################
-
+model = initialize_model(world_graph)
+# initialize_model(4)
 
 ## Color dels agents en funció del tipus
-agent_color(a) = a isa Worker ? :red : :blue
+#agent_color(a) = a isa Worker ? :red : :blue
 agent_color(a) = a isa Capital ? :blue :
     a.status == Employed ? :red : 
     a.status == Unemployed ? :black :
@@ -28,14 +43,32 @@ agent_marker(a) = a isa Worker ? '☻' : '𝓒'
 offset(a) = a isa Worker ? Tuple(0.1 * randn(2)) : (0, 0)
 heatarray(model) = model.world.n_workplaces
 
+function node_color(agents_here)
+    n_agents_here = length(agents_here)
+    n_capital = count(a isa Capital for a in agents_here)
+    n_workers = count(a isa Worker for a in agents_here)
+    return RGB(n_capital / n_agents_here, n_workers / n_agents_here, 0)
+end
+
+node_size(agents_here) = length(agents_here) * 1
 # BUG: https://github.com/JuliaDynamics/Agents.jl/issues/1035
-# TODO: remove agent_size as a workaround to avoid error functions for color, maker
+# TODO: remove agent_size as a workaround to avoid errors in functions for color, maker
 # plotkwargs = (;
 #     agent_color, agent_size, agent_marker, offset, heatarray
 # )
 plotkwargs = (;
-    agent_color, agent_marker, offset, heatarray
+    node_color, agent_marker, offset, heatarray
 )
+
+plotkwargs = (;
+    node_color, node_size
+)
+
+
+###########################
+## Interactive ABM plots ##
+###########################
+
 
 
 params = Dict(
@@ -59,11 +92,15 @@ profit_rate(model) = mean(model.profit_rate)
 mdata = [:profit_rate]
 mlabels = ["Profit rate"]
 
-model = initialize_model(world_size)
+
+model = initialize_model(4)
+
+# fig, ax, abmobs = abmplot(model; agent_size = node_size, agent_color = node_color)
+# fig
 
 fig, ax, abmobs = abmplot(model; plotkwargs...)
 fig
-
+agent_data, model_data = run!(model, n_steps; adata=adata, mdata=mdata, showprogress=true)
 
 ## TODO: Error in callback:
 # DimensionMismatch: arrays could not be broadcast to a common size: a has axes Base.OneTo(130) and b has axes Base.OneTo(162)
@@ -74,7 +111,7 @@ fig_int
 
 
 fig_int_data, ax, abmobs = abmplot(
-    model; add_controls=true, plotkwargs..., params, adata, mdata
+    model; add_controls=true, params, adata, mdata, plotkwargs...
 )
 fig_int_data
 
@@ -83,12 +120,12 @@ step_abm!(abmobs)
 
 ## Interactive ABM plot with aggregated scatterplots
 
-model = initialize_model(world_size)
+model = initialize_model(world_graph)
 fig_exp, abmobs = abmexploration(model;
     params, plotkwargs...,
     adata, alabels, mdata, mlabels
 )
-fig_exp
+fig_exp ## BOOKMARK: looks good!
 
 
 ## Interactive ABM plot with custom plots
@@ -96,9 +133,52 @@ fig_exp
 abmobs = ABMObservable(model; adata, mdata)
 
 
-####################
-## Run simulation ##
-####################
+#################################
+## Plot graph model statically ##
+#################################
+
+## Color dels agents en funció del tipus
+#agent_color(a) = a isa Worker ? :red : :blue
+agent_color(a) = a isa Capital ? :blue :
+    a.status == Employed ? :red : 
+    a.status == Unemployed ? :black :
+    a.status == Autonomous ? :green : :yellow
+agent_size(a) = a isa Worker ? 20 : 40
+# agent_marker(a) = a isa Worker ? '🙂' : '🏭' # https://docs.julialang.org/en/v1/manual/unicode-input/
+agent_marker(a) = a isa Worker ? '☻' : '𝓒'
+offset(a) = a isa Worker ? Tuple(0.1 * randn(2)) : (0, 0)
+heatarray(model) = model.world.n_workplaces
+
+function node_color(agents_here)
+    n_agents_here = length(agents_here)
+    n_capital = count(a isa Capital for a in agents_here)
+    n_workers = count(a isa Worker for a in agents_here)
+    return RGB(n_capital / n_agents_here, n_workers / n_agents_here, 0)
+end
+
+node_size(agents_here) = length(agents_here) * 1
+# BUG: https://github.com/JuliaDynamics/Agents.jl/issues/1035
+# TODO: remove agent_size as a workaround to avoid errors in functions for color, maker
+# plotkwargs = (;
+#     agent_color, agent_size, agent_marker, offset, heatarray
+# )
+plotkwargs = (;
+    node_color, agent_marker, offset, heatarray
+)
+
+plotkwargs = (;
+    node_color, node_size
+)
+
+#fig, ax, abmobs = abmplot(model; agent_size = node_size)#, agentsplotkwargs)
+fig, ax, abmobs = abmplot(model; agent_size = node_size, agent_color = node_color)#, agentsplotkwargs)
+fig
+
+
+
+################################
+## Plot variables after a run ##
+################################
 model = initialize_model(world_size)
 
 model.commodities_demand = 10000
@@ -133,7 +213,7 @@ dfm = init_model_dataframe(model, mdata)
 
 
 # Plots
-
+steps = 0:n_steps  # Passos de la simulació
 Plots.plot(
     Plots.plot(
         steps, [agent_data[:, :average_wealth_workers], agent_data[:, :average_wealth_capital]],

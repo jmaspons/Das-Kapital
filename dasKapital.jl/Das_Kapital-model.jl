@@ -1,9 +1,10 @@
 using Agents
 using DataFrames
+using Graphs
 using Random
 
-include("Das_Kapital-worker.jl")
-include("Das_Kapital-capital.jl")
+include("worker.jl")
+include("capital.jl")
 
 
 ## DEFAULT PARAMETERS
@@ -11,18 +12,18 @@ include("Das_Kapital-capital.jl")
 # https://juliadynamics.github.io/Agents.jl/stable/performance_tips/#Use-Type-stable-containers-for-the-model-properties
 
 @kwdef mutable struct World
-    natural_resources::Matrix{Float64}
-    n_workplaces::Matrix{UInt}
-    n_workers::Matrix{UInt}
+    natural_resources::Vector{Float64}
+    n_workplaces::Vector{UInt}
+    n_workers::Vector{UInt}
 
-    function World(n = 5, m = 5)
-        natural_resources = Matrix{Float64}(undef, n, m)
-        n_workplaces = Matrix{UInt}(undef, n, m)
-        n_workers = Matrix{UInt}(undef, n, m)
+    function World(n = 25)
+        natural_resources = Vector{Float64}(undef, n)
+        n_workplaces = Vector{UInt}(undef, n)
+        n_workers = Vector{UInt}(undef, n)
         new(natural_resources, n_workplaces, n_workers)
     end
 end
-World() = World(5, 5)
+World() = World(25)
 
 @kwdef mutable struct ModelParameters # TODO: const non tunnable parameters
     life_cost::Float64 = 1
@@ -36,22 +37,21 @@ World() = World(5, 5)
     commodities_demand::Float64 = 2000000
     profit_rate::Float64 = 0
     tech_cost_base::Int = 5
-    world::World = World(0, 0)
+    world::World = World(0)
 
-    function ModelParameters(world_size = [5, 5])
-        world = World(world_size[1], world_size[2])
+    function ModelParameters(world_size = 10)
+        world = World(world_size)
         new(1, 65, 6, 18, 65, 5, 2.5, 10, 2000000, 0, 5, world)
     end
 end
-ModelParameters() = ModelParameters([5, 5])
+ModelParameters() = ModelParameters(10)
 
 
 # Funció per inicialitzar el model
-function initialize_model(world_size = (5, 5); num_workers=5, num_capitalists=1)
-    # space = GraphSpace()
-    space = GridSpace(world_size, periodic=false)
+function initialize_model(world_graph::Graphs.AbstractGraph = Graphs.complete_graph(10); num_workers=5, num_capitalists=1)
+    space = GraphSpace(world_graph)
 
-    properties = ModelParameters(world_size)
+    properties = ModelParameters(nv(world_graph))
     fill!(properties.world.natural_resources, 100)
     fill!(properties.world.n_workplaces, 20) # for communal lands
     fill!(properties.world.n_workers, 0)
@@ -76,16 +76,25 @@ function initialize_model(world_size = (5, 5); num_workers=5, num_capitalists=1)
     end
 
     # Add Capital to first row only
-    for i in 1:space.extent[1]
+    for i in 1:Int(round(sqrt(nv(model)))) # TODO: leave empty spaces for communal land
         for _ in 1:num_capitalists
-            add_agent!((i, 1), Capital, model, wealth=1 + rand(abmrng(model), 1:500))
+            add_agent!(i, Capital, model, wealth=1 + rand(abmrng(model), 1:500))
         end
     end
 
     return model
 end
 
+function initialize_model(world_size::Integer = 10; num_workers = 5, num_capitalists = 1)
+    return initialize_model(Graphs.complete_graph(world_size); num_workers = num_workers, num_capitalists = num_capitalists)
+end
 
+
+"""
+    schedule_work(model::StandardABM)
+
+Returns a scheduler that updates Capital agents first, then Worker agents sorted by status: Employed, Autonomous, Unemployed.
+"""
 function schedule_work(model::StandardABM)
     st = Schedulers.ByType((Capital, Worker),  false)
     s_by_type = st(model)
@@ -111,6 +120,11 @@ function schedule_work(model::StandardABM)
     return s_by_type
 end
 
+"""
+    schedule_sell(model::StandardABM)
+
+Returns a scheduler that updates Capital agents sorted by unitary production cost (lowest first).
+"""
 function schedule_sell(model::StandardABM)
     capital_ids = filter(i -> model[i] isa Capital && model[i].commodities > 0, allids(model))
     capital_ids = convert.(Int, capital_ids)
@@ -186,12 +200,15 @@ function model_step!(model::StandardABM)
 
         capital_dev = filter(
             i -> model[i] isa Capital &&
-            model[i].wealth > 0 &&
-            model[i].pos[2] < spacesize(model)[2],
+            model[i].wealth > 0,
             allids(model)
         )
         for i in capital_dev
-            capital_develop_means_of_production!(model[i], model, exchange_value)
+            new_pos = no_capital_nearby(model[i], model)
+            if !isnothing(new_pos)
+                capital_develop_means_of_production!(model[i], model, exchange_value, new_pos)
+            end
+            
         end
     end
 
@@ -237,76 +254,12 @@ function model_step!(model::StandardABM)
 end
 
 
-## Getters
-
-function Base.show(io::IO, a::Worker)
-    print(Agents.agent2string(a))
-end
-
-function Base.show(io::IO, a::Capital)
-    print(Agents.agent2string(a))
-end
-
-# function show_agent(a::AbstractAgent)
-#     println(typeof(a), "\n#################")
-#     for (name, type) in zip(fieldnames(typeof(a)), fieldtypes(typeof(a)))
-#         val = getfield(a, name)
-#         # println(name, "::", type, " =\t", val)
-#         println(rpad(name, 17), " = ", val)
-#     end
-# end
-
-
-function get_capitals_variable(model::AgentBasedModel, variable::Symbol)
-    capital_ids = filter(id -> model[id] isa Capital, allids(model))
-    vals = Vector(undef, length(capital_ids))
-    for (i, id) in enumerate(capital_ids)
-        vals[i] = getproperty(model[id], variable)
-    end
-    return(vals)
-end
-
-function get_workers_variable(model::AgentBasedModel, variable::Symbol)
-    workers_ids = filter(id -> model[id] isa Worker, allids(model))
-    vals = Vector(undef, length(workers_ids))
-    for (i, id) in enumerate(workers_ids)
-        vals[i] = getproperty(model[id], variable)
-    end
-    return(vals)
-end
-
-
-
-function get_capitals_variable(model::AgentBasedModel)
-    capital_ids = filter(id -> model[id] isa Capital, allids(model))
-    a = model[first(capital_ids)]
-    cols = fieldnames(typeof(a))
-    df = DataFrame(
-        [getproperty(model[id], col) for id in capital_ids, col in cols],
-        collect(cols)
-    )
-    
-    # Set types
-    for (i, type) in enumerate(fieldtypes(typeof(a)))
-        df[!, i] = convert(Vector{type}, df[!, i])
+function no_capital_nearby(a, model)
+    for pos in nearby_positions(a, model)
+        if !any(id -> model[id] isa Capital, agents_in_position(pos, model).iter)
+            return pos
+        end
     end
 
-    return df
-end
-
-
-function get_workers_variable(model::AgentBasedModel)
-    workers_ids = filter(id -> model[id] isa Worker, allids(model))
-    a = model[first(workers_ids)]
-    cols = fieldnames(typeof(a))
-    df = DataFrame(
-        [getproperty(model[id], col) for id in workers_ids, col in cols],
-        collect(cols)
-    )
-
-    # Set types
-    for (i, type) in enumerate(fieldtypes(typeof(a)))
-        df[!, i] = convert(Vector{type}, df[!, i])
-    end
-    return(df)
+    return nothing
 end

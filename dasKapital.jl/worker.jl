@@ -4,7 +4,7 @@ using Random
 
 
 @enum HumanType Unemployed Employed Autonomous Child
-@agent struct Worker(GridAgent{2})  # Heretem de GridAgent per a un espai 2D
+@agent struct Worker(GraphAgent)  # Heretem de GridAgent per a un espai 2D
     age::UInt8
     wealth::Float64
     status::HumanType = Autonomous
@@ -38,7 +38,7 @@ function worker_work!(a::Worker)
     capital_id = filter(i -> model[i] isa Capital, a_pos.iter)
     
     if length(capital_id) > 0 # wage labour
-        capital_id = Int(capital_id[1]) # Only one Capital agent per position
+        capital_id = Int(capital_id[1]) # Cast to atomic. Only one Capital agent per position
         capital = model[capital_id]
         if capital.n_workers < capital.max_n_workplaces &&
                 rand(abmrng(model)) > 0.1 # Probability of losing the job TODO: parameter
@@ -46,7 +46,7 @@ function worker_work!(a::Worker)
             a.wealth += capital.wage_hour * capital.working_hours
             a.capital_id = capital_id
             capital.n_workers += 1
-            model.world.n_workers[capital.pos[1], capital.pos[2]] += 1
+            model.world.n_workers[capital.pos] += 1
         else
             a.status = Unemployed
             a.capital_id = -1
@@ -54,10 +54,10 @@ function worker_work!(a::Worker)
     else ## communal lands
         a.capital_id = -1
         # TODO: check a.pos -> in model.world in plots: x, y -> lat, lon -> row, col
-        if model.world.n_workers[a.pos[1], a.pos[2]] < model.world.n_workplaces[a.pos[1], a.pos[2]]
+        if model.world.n_workers[a.pos] < model.world.n_workplaces[a.pos]
             a.status = Autonomous
             a.wealth += model.wage * model.life_cost
-            model.world.n_workers[a.pos[1], a.pos[2]] += 1
+            model.world.n_workers[a.pos] += 1
         else
             a.status = Unemployed
         end
