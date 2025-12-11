@@ -1,0 +1,238 @@
+---
+# title: "El Capital amb números"
+# author: "Joan Maspons"
+format:
+  dashboard:
+    logo: images/logo.png
+    scrolling: true
+    # nav-buttons: [github]
+server: shiny
+lang: ca
+---
+
+<!-- https://quarto.org/docs/reference/formats/dashboard.html -->
+<!-- https://quarto.org/docs/reference/formats/dashboard.html#cards -->
+
+# El Capital amb números
+
+Introducció pendent
+
+
+# DK1 secció 5
+
+## Descripció
+
+::: {.card title="La producció de plus-vàlua absoluta i relativa" fill = false}
+
+<!-- Assumim, 1. que les mercaderies es venen pel llur valor, 2. que el preu de la força de treball puja ocasionalment per damunt del seu valor, però mai cau per sota. -->
+
+Les quantitats relatives del preu de la força de treball i de la plus-vàlua es condicionen per tres circumstàncies:
+
+1. la durada de la jornada laboral o la grandària extensiva del treball;
+2. la intensitat normal del treball o la seua grandària intensiva, és a dir l'esmerçament d'una determinada quantitat de treball en un temps determinat;
+3. la productivitat del treball, és a dir que segons el grau de desenvolupament de les condicions de producció la mateixa quantitat de treball ofereix en el mateix temps una quantitat més gran de producte
+
+- plus-vàlua = jornada * intensitat * productivitat - preu_treball
+
+:::
+
+```{r function}
+#| echo: FALSE
+#| title: Simulació
+treball_plusvalua <- function(jornada, intensitat,
+                              productivitat, preuTreball) {
+  valor <- jornada * intensitat * productivitat
+  plusvalua <- valor - preuTreball
+  treballNecessari <- preuTreball / (intensitat * productivitat)
+
+  out <- data.frame(valor, plusvalua, treballNecessari)
+
+  return(out)
+}
+
+jornada <- 8:16
+intensitat <- seq(0.75, 1.5, by = .25)
+productivitat <- seq(1, 1.5, by = .25)
+preuTreball <- 5 # valor de la força de treball
+```
+
+
+```{r simulate0}
+#| echo: FALSE
+#| title: Simula
+escenari <- expand.grid(
+  jornada = jornada, intensitat = intensitat,
+  productivitat = productivitat, preuTreball = preuTreball
+)
+
+resultat <- treball_plusvalua(
+  jornada = escenari$jornada, intensitat = escenari$intensitat,
+  productivitat = escenari$productivitat, preuTreball = escenari$preuTreball
+)
+resultat <- cbind(escenari, resultat)
+```
+
+## "Resultats: Treball necessari VS plus-vàlua
+
+### Plusvàlua {.sidebar} 
+
+```{r}
+sidebarPanel(
+  h4("Paràmetres del Capital"), h5("Composició Orgànica del Capital"),
+  sliderInput("jornada", "Jornada:", value = c(8, 16), min = 6, max = 16, step = 0.5),
+  sliderInput("intensitat", "Intensitat del treball:", value = c(0.75, 1.25), min = 0.75, max = 1.5, step = 0.05),
+  sliderInput("productivitat", "Productivitat del treball:", value = c(1, 1.5), min = 1, max = 1.5, step = 0.05),
+  sliderInput("preu_treball", "Preu del treball:", value = 4, min = 1, max = 10, step = 0.1)
+)
+```
+
+### Taxa d'explotació {.tabset .fill}
+
+```{r}
+#| title: "Resultats: Treball necessari VS plus-vàlua"
+plotlyOutput("k1_s5_grafic_p")
+```
+
+```{r}
+#| title: "Taxa d'explotació"#: Plus-vàlua / treballNecessari"
+plotlyOutput("k1_s5_grafic_taxaExplotacio")
+```
+
+```{r}
+#| title: "Taxa d'explotació absoluta (+18 ☭):"#  Plus-vàlua / valor"
+plotlyOutput("k1_s5_grafic_taxaExplotacioAbsoluta")
+```
+
+
+## Prediccións
+
+::: {.card title="Compara les prediccions de Marx amb el model" fill = false}
+
+- I. Durada de la jornada laboral i intensitat del treball constants (donades), productivitat del treball variable
+- II. Jornada laboral constant, productivitat del treball constant, intensitat de treball variable
+- III. Productivitat i intensitat del treball constants, jornada laboral variable
+- IV. Variacions simultànies de la durada, productivitat i intensitat del treball
+
+:::
+
+## Simulació amb valor de la força de treball més alt
+
+::: {.card title="Què passa si el valor de la força de treball és més alt?" fill = false}
+
+El valor de la força de treball depèn del valor dels mitjans necessaris per mantenir i reproduir els obrers en un
+context històric determinat (habitatge, alimentació, etc.)
+
+> preu de la força de treball = valor de 12h de treball normal
+:::
+
+
+
+# DK3 secció 1
+
+## Capitol 3
+
+::: {.card title = "Capitol 3" fill = false}
+
+Capital variable
+Capital fix
+  Capital constant: eines i maquinària
+  Capital circulant: materies primeres, transfereixen tot el seu valor a la mercaderia
+
+Benefici = b; la fórmula M = c + v + p = pc + p es converteix en la fórmula
+M = pc + b, o valor mercantil = preu de cost + benefici.
+
+M = c + v + p = pc + p
+b' = p / (c + v)
+p' = p / v
+
+b' = p' * (v / C) -> modifica els valors de la formula per veure efecte en b' (pàg. 60 - 78 (resum))
+
+
+b' / p' = v / C
+
+:::
+
+
+## Capitol 6 pàg. 118
+
+::: {.card title = "Capitol 6" fill = false}
+
+modificacions del preu de la matèria primera en c (capital circulant (matèria primera + salaris) VS fix -> maquinària)
+
+d = modificació del preu de la matèria primera
+
+b' = p / ((c + d) + v)
+
+
+**Alliberament i vinculació del capital per fluctuació dels preus de materies primeres**
+Part determinada del valor global del producte que ha de ser retrotransformada de nou en els elements del capital constant o variable si es vol que la producció continuï a l'escala precedent.
+
+Efecte retroactiu de la variació de preus de les matèries primeres (materies en magatzem i mercaderies en estoc)
+Variació del preu dels mitjans de subsistència -> canvis en v
+
+Desacoblament entre la reproducció de capital fix i de capital circulant de les matèries primeres de naturalesa orgànica (oscil·lant i irregular)
+
+Descripció de les oscilacions de preu: paper de la saturació del mercat per sobre-producció més important que les fluctuacions del preu de la matèria primera
+
+:::
+
+##
+
+```{r}
+#| content: card-sidebar
+#| card-layout: fill
+#| layout-height: 100% 
+# layout-fill: true # TODO
+# layout-expand: true # TODO
+# layout-max-height: 600px # TODO
+
+
+sidebarPanel(
+  h4("Paràmetres del Capital"), h5("Composició Orgànica del Capital"),
+  numericInput("c", "Capital Constant (c):", value = 100, min = 50, max = 500),
+  numericInput("v", "Capital Variable (v):", value = 100, min = 50, max = 500),
+  hr(),
+  numericInput("p", "Plusvàlua (pv):", value = 50, min = 10, max = 200)#,
+  
+  # h4("Factors de Canvi de Preus"),
+  # sliderInput("factor_c", "Factor de canvi en Capital Constant:",
+  #             min = 0.5, max = 2, value = 1, step = 0.1),
+  # sliderInput("factor_v", "Factor de canvi en Capital Variable:",
+  #             min = 0.5, max = 2, value = 1, step = 0.1),
+  # sliderInput("factor_pv", "Factor de canvi en Plusvàlua:",
+  #             min = 0.5, max = 2, value = 1, step = 0.1),
+  
+  # actionButton("calcular", "Calcular Taxa de Guany")
+)
+```
+
+<!-- ### {.tabset} -->
+
+```{r}
+#| title: "Efecte del en la composició del capital en la taxa de benefici i plusvàlua"
+#| panel: fill
+# p("Variació de c")
+# plotOutput("k3_s1_grafic_b_c", height = 250)
+# p("Variació de v")
+# plotOutput("k3_s1_grafic_b_v", height = 250)
+# p("Variació de pv")
+# plotOutput("k3_s1_grafic_b_p", height = 250)
+
+plotlyOutput("k3_s1_grafic_p_cvp")
+
+plotlyOutput("k3_s1_grafic_b_cvp")
+
+```
+
+
+# DK3 secció 2
+
+::: {.card title = "Capítol 7" fill = false}
+- Composició orgànica
+- Composició tècnica
+- Composició del valor
+:::
+
+<!-- https://quarto.org/docs/interactive/shiny/execution.html -->
+
+
