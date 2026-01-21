@@ -1,22 +1,41 @@
 using Agents
 using DataFrames
 
+function agent2string(agent::A) where {A<:AbstractAgent}
+    agentstring = "▶ $(nameof(A))\n"
 
-#############
-## Getters ##
-#############
+    agentstring *= "id: $(getproperty(agent, :id))\n"
 
-function Base.show(io::IO, a::Worker)
-    print(Agents.agent2string(a))
-end
+    if hasproperty(agent, :pos)
+        pos = getproperty(agent, :pos)
+        if pos isa Union{NTuple{<:Any, <:AbstractFloat},SVector{<:Any, <:AbstractFloat}}
+            pos = round.(pos, sigdigits=2)
+        elseif pos isa Tuple{<:Int, <:Int, <:AbstractFloat}
+            pos = (pos[1], pos[2], round(pos[3], sigdigits=2))
+        end
+        agentstring *= "pos: $(pos)\n"
+    end
 
-function Base.show(io::IO, a::Capital)
-    print(Agents.agent2string(a))
+    for field in fieldnames(A)[3:end]
+        val = getproperty(agent, field)
+        if val isa AbstractFloat
+            val = round(val, sigdigits=2)
+        elseif val isa AbstractArray{<:AbstractFloat}
+            val = round.(val, sigdigits=2)
+        elseif val isa NTuple{<:Any, <:AbstractFloat}
+            val = round.(val, sigdigits=2)
+        end
+        agentstring *= "$(field): $val\n"
+    end
+
+    return agentstring
 end
 
 function Base.show(io::IO, a::AbstractAgent)
-    print(Agents.agent2string(a))
+    agentstring = agent2string(a)
+    print(io, agentstring)
 end
+
 
 function Base.show(io::IO, p::ModelParameters)
     println(io, typeof(p), "(")
@@ -27,6 +46,10 @@ function Base.show(io::IO, p::ModelParameters)
     println(io, ")")
 end
 
+
+#############
+## Getters ##
+#############
 
 function get_capitals_variable(model::AgentBasedModel, variable::Symbol)
     capital_ids = filter(id -> model[id] isa Capital, allids(model))
