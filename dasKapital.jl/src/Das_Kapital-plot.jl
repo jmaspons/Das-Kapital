@@ -21,7 +21,8 @@ using DataFrames
 # using Random
 using Plots  # Importem la llibreria de gràfics
 
-include("Das_Kapital-model.jl")
+include("src/DasKapital.jl")
+using .DasKapital
 
 g_cyle = cycle_graph(4)
 g_bararasi_albert = barabasi_albert!(g_cyle, 16, 3);
@@ -47,10 +48,12 @@ function node_color(agents_here)
     n_agents_here = length(agents_here)
     n_capital = count(a isa Capital for a in agents_here)
     n_workers = count(a isa Worker for a in agents_here)
+
     return RGB(n_capital / n_agents_here, n_workers / n_agents_here, 0)
 end
 
 node_size(agents_here) = length(agents_here) * 1
+
 # BUG: https://github.com/JuliaDynamics/Agents.jl/issues/1035
 # TODO: remove agent_size as a workaround to avoid errors in functions for color, maker
 # plotkwargs = (;
@@ -61,7 +64,7 @@ plotkwargs = (;
 )
 
 plotkwargs = (;
-    node_color, node_size
+    agent_color = node_color, agent_size = node_size
 )
 
 
@@ -88,18 +91,17 @@ isacapital(a) = a isa Capital
 adata = [(isaworker, count), (isacapital, count), (:wealth, mean, isaworker), (:wealth, mean, isacapital)] # Aggregated data from agents  -> :time, data...
 alabels = ["n Workers", "n Capitals", "Avg Wealth Workers", "Avg Wealth Capitals"]
 
-profit_rate(model) = mean(model.profit_rate)
-mdata = [:profit_rate]
-mlabels = ["Profit rate"]
+mdata = [:avg_profit_rate]
+mlabels = ["Avg. profit rate"]
 
-
-model = initialize_model(4)
 
 # fig, ax, abmobs = abmplot(model; agent_size = node_size, agent_color = node_color)
 # fig
 
 fig, ax, abmobs = abmplot(model; plotkwargs...)
 fig
+
+n_steps = 5
 agent_data, model_data = run!(model, n_steps; adata=adata, mdata=mdata, showprogress=true)
 
 ## TODO: Error in callback:
@@ -114,6 +116,8 @@ fig_int_data, ax, abmobs = abmplot(
     model; add_controls=true, params, adata, mdata, plotkwargs...
 )
 fig_int_data
+abmobs.adata
+
 
 step_abm!(abmobs)
 
@@ -179,6 +183,7 @@ fig
 ################################
 ## Plot variables after a run ##
 ################################
+
 model = initialize_model(world_size)
 
 model.commodities_demand = 10000
@@ -192,8 +197,8 @@ isacapital(a) = a isa Capital
 adata = [(isaworker, count), (isacapital, count), (:wealth, mean, isaworker), (:wealth, mean, isacapital)] # Aggregated data from agents  -> :time, data...
 # TODO: Notice: Aggregating only works if there are agents to be aggregated over. If you remove agents during model run, you should modify the aggregating functions. E.g. instead of passing mean, pass mymean(a) = isempty(a) ? 0.0 : mean(a).
 
-# profit_rate(model) = mean(model.profit_rate)
-mdata = [:profit_rate]
+
+mdata = [:avg_profit_rate]
 
 
 # agent_data: DataFrame containing data collected from agents during the simulation (agregated or for all agents (:id))

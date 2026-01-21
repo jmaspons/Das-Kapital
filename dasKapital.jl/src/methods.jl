@@ -84,3 +84,8 @@ function get_workers_variable(model::AgentBasedModel)
 
     return df
 end
+
+
+function get_model_properties(model::AgentBasedModel)
+    abmproperties(model)
+end

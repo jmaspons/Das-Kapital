@@ -1,6 +1,7 @@
 # Use local version of Agents.jl
-# using Pkg
-# Pkg.activate(".")  # activa l'entorn del projecte actual
+using Pkg
+Pkg.activate(".")  # activa l'entorn del projecte actual
+# Pkg.develop(path=".")
 
 # # set local Agents.jl
 # Pkg.develop(path="/home/joan/Documents/nextcloud/dev/julia/Agents.jl")
@@ -9,14 +10,13 @@
 # Pkg.rm("Agents")
 # Pkg.add("Agents")
 
-using Agents # upstream version
-# Pkg.status()
-
-using Graphs # crea world_graph
+Pkg.status()
+# include("src/DasKapital.jl")
+using Revise
+using DasKapital
+using Agents
 using DataFrames
-include("Das_Kapital-model.jl")
-include("methods.jl")
-
+using Graphs
 
 g_cycle = cycle_graph(4)
 g_bararasi_albert = barabasi_albert!(g_cycle, 16, 3);
@@ -42,7 +42,7 @@ alabels = ["n Workers", "n Capitals", "Avg Wealth Workers", "Avg Wealth Capitals
 #  E.g. instead of passing mean, pass mymean(a) = isempty(a) ? 0.0 : mean(a).
 
 # Aggregated data from the model
-mdata = [:profit_rate]
+mdata = [:avg_profit_rate]
 mlabels = ["Avg. profit rate"]
 
 
@@ -55,7 +55,7 @@ mlabels = ["Avg. profit rate"]
 ####################
 
 model = initialize_model(world_graph)
-model = initialize_model(world_size)
+# model = initialize_model(world_size)
 
 # model.commodities_demand = 10000
 
@@ -76,12 +76,9 @@ rename!(
     :mean_wealth_isacapital => :average_wealth_capital
 )
 
+a = random_agent(model)
 capitals = get_capitals_variable(model)
 workers = get_workers_variable(model)
-get_model_properties(model);
+get_model_properties(model)
 
-
-dfa_id = init_agent_dataframe(model, [:wealth])
-dfa_aggr = init_agent_dataframe(model, adata)
-dfm = init_model_dataframe(model, mdata)
 

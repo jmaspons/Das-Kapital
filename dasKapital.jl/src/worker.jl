@@ -33,7 +33,7 @@ end
 
 # DEBUG: a = random_agent_in_position((1, 1), model, a -> a isa Worker) # Worker with Capital
 # DEBUG: a = random_agent_in_position((1, 5), model, a -> a isa Worker) # Worker without Capital
-function worker_work!(a::Worker)
+function worker_work!(a::Worker, model::StandardABM)
     a_pos = agents_in_position(a, model)
     capital_id = filter(i -> model[i] isa Capital, a_pos.iter)
     

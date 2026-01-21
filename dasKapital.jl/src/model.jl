@@ -5,6 +5,7 @@ using Random
 
 include("worker.jl")
 include("capital.jl")
+include("capital_formulas.jl")
 
 
 ## DEFAULT PARAMETERS
@@ -35,13 +36,14 @@ World() = World(25)
     wage::Float64 = 2.5 #1.8
     autonomous_working_hours::Float64 = 10
     commodities_demand::Float64 = 2000000
-    profit_rate::Float64 = 0
+    avg_profit_rate::Float64 = 0
     tech_cost_base::Int = 5
+    tech_productivity_increase::Float64 = 2.0
     world::World = World(0)
 
     function ModelParameters(world_size = 10)
         world = World(world_size)
-        new(1, 65, 6, 18, 65, 5, 2.5, 10, 2000000, 0, 5, world)
+        new(1, 65, 6, 18, 65, 5, 2.5, 10, 2000000, 0, 5, 2, world)
     end
 end
 ModelParameters() = ModelParameters(10)
@@ -120,6 +122,7 @@ function schedule_work(model::StandardABM)
     return s_by_type
 end
 
+
 """
     schedule_sell(model::StandardABM)
 
@@ -128,7 +131,7 @@ Returns a scheduler that updates Capital agents sorted by unitary production cos
 function schedule_sell(model::StandardABM)
     capital_ids = filter(i -> model[i] isa Capital && model[i].commodities > 0, allids(model))
     capital_ids = convert.(Int, capital_ids)
-    prod_cost = [model[i].production_cost for i in capital_ids]
+    prod_cost = [model[i].unitary_production_cost for i in capital_ids]
     capital_ids = capital_ids[sortperm(prod_cost)]
     
     return Iterators.Stateful(capital_ids)
@@ -156,9 +159,9 @@ function model_step!(model::StandardABM)
     for id in sch_work
         a = model[id]
         if a isa Worker
-            worker_work!(a)
+            worker_work!(a, model)
         elseif a isa Capital
-            capital_restart!(a, model)
+            capital_plan!(a, model)
         end
     end
 
@@ -182,7 +185,7 @@ function model_step!(model::StandardABM)
     for a in allagents(model)
         if a isa Capital && a.commodities > 0
             total_commodities += a.commodities
-            total_commodities_cost += a.commodities * a.production_cost
+            total_commodities_cost += a.commodities * a.unitary_production_cost
         end
     end
 
@@ -225,6 +228,23 @@ function model_step!(model::StandardABM)
     for id in workers_repr
         worker_reproduce!(model[id], model)
     end
+
+
+    # Agregate data at model level
+
+    model.avg_profit_rate = mean(a.profit_rate for a in allagents(model) if a isa Capital && a.wealth > 0)
+    # total_surplus = sum(a.surplus for a in allagents(model) if a isa Capital)
+    # total_variable_capital = sum(a.variable_capital for a in allagents(model) if
+    #     a isa Capital && a.variable_capital > 0
+    # )
+    # if total_variable_capital > 0
+    #     model.avg_profit_rate = mean(
+    #         a.profit_rate for a in allagents(model) if a isa Capital && a.variable_capital > 0
+    #     )
+    # else
+    #     model.profit_rate = 0
+    # end
+
 
     # # Redistribució de la riquesa (simplificada)
     # total_wealth = sum(a.wealth for a in allagents(model))
